@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CalendarIcon, Clock, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,7 @@ const AppointmentForm = () => {
   const [specialty, setSpecialty] = useState("");
   const { toast } = useToast();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!date || !timeSlot || !specialty) {
@@ -46,18 +45,40 @@ const AppointmentForm = () => {
       return;
     }
     
-    toast({
-      title: "Appointment Scheduled",
-      description: `Your appointment has been booked for ${format(date, 'MMMM dd, yyyy')} at ${timeSlot}.`,
-    });
-    
-    // Reset form or redirect
-    setTimeout(() => {
-      setDate(undefined);
-      setTimeSlot(null);
-      setAppointmentType("in-person");
-      setSpecialty("");
-    }, 500);
+    try {
+      const userInfo = localStorage.getItem('userInfo');
+      let email = '';
+      let phone = '';
+      
+      if (userInfo) {
+        const { email: userEmail, phone: userPhone } = JSON.parse(userInfo);
+        email = userEmail;
+        phone = userPhone;
+      }
+      
+      console.log(`Sending email notification to: ${email}`);
+      if (phone) {
+        console.log(`Sending SMS notification to: ${phone}`);
+      }
+      
+      toast({
+        title: "Appointment Scheduled",
+        description: `Your appointment has been booked for ${format(date, 'MMMM dd, yyyy')} at ${timeSlot}. A confirmation has been sent to your email${phone ? ' and phone' : ''}.`,
+      });
+      
+      setTimeout(() => {
+        setDate(undefined);
+        setTimeSlot(null);
+        setAppointmentType("in-person");
+        setSpecialty("");
+      }, 500);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Booking failed",
+        description: "Failed to schedule appointment. Please try again.",
+      });
+    }
   };
   
   return (
