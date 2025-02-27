@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
 
 const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -31,25 +33,37 @@ const AuthForm = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
+      // Store user info in localStorage for profile management
+      const userInfo = {
+        email: loginEmail,
+        name: loginEmail.split('@')[0],
+        isAdmin: isAdmin,
+        profileImage: null,
+        phone: "",
+        address: "",
+      };
+      
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      
       // Mock authentication - in a real app this would validate with a backend
-      if (loginEmail === 'demo@example.com' && loginPassword === 'password') {
+      if (isAdmin) {
+        toast({
+          title: "Admin login successful",
+          description: "Welcome to the admin dashboard!",
+        });
+        navigate('/admin-dashboard');
+      } else {
         toast({
           title: "Login successful",
           description: "Welcome back to MediBooking!",
         });
         navigate('/dashboard');
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Login failed",
-          description: "Invalid email or password. Try demo@example.com / password.",
-        });
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: "Something went wrong. Please try again.",
+        description: "Invalid email or password. Try any email and password for demo.",
       });
     } finally {
       setIsLoading(false);
@@ -64,19 +78,64 @@ const AuthForm = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
+      // Store user info in localStorage for profile management
+      const userInfo = {
+        email: signupEmail,
+        name: signupName,
+        isAdmin: false,
+        profileImage: null,
+        phone: "",
+        address: "",
+      };
+      
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      
       toast({
         title: "Account created",
-        description: "Welcome to MediBooking! You can now sign in.",
+        description: "Welcome to MediBooking! You're now logged in.",
       });
       
-      // Reset form
-      setSignupName('');
-      setSignupEmail('');
-      setSignupPassword('');
+      navigate('/dashboard');
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Sign up failed",
+        description: "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGmailLogin = async () => {
+    setIsLoading(true);
+    
+    // Simulate Gmail login
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Mock user info from Gmail
+      const userInfo = {
+        email: "user@gmail.com",
+        name: "Gmail User",
+        isAdmin: false,
+        profileImage: null,
+        phone: "",
+        address: "",
+      };
+      
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      
+      toast({
+        title: "Gmail login successful",
+        description: "Welcome to MediBooking!",
+      });
+      
+      navigate('/dashboard');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Gmail login failed",
         description: "Something went wrong. Please try again.",
       });
     } finally {
@@ -134,6 +193,20 @@ const AuthForm = () => {
               </div>
             </div>
             
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="admin" 
+                checked={isAdmin} 
+                onCheckedChange={(checked) => setIsAdmin(checked as boolean)} 
+              />
+              <label
+                htmlFor="admin"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Login as Administrator
+              </label>
+            </div>
+            
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -145,8 +218,28 @@ const AuthForm = () => {
               )}
             </Button>
             
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+            
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleGmailLogin}
+              disabled={isLoading}
+            >
+              <Mail className="mr-2 h-4 w-4 text-red-500" />
+              Sign in with Gmail
+            </Button>
+            
             <p className="text-sm text-center text-muted-foreground mt-4">
-              For demo, use: <span className="font-medium">demo@example.com / password</span>
+              For demo, enter any email and password
             </p>
           </form>
         </TabsContent>
@@ -213,6 +306,26 @@ const AuthForm = () => {
               ) : (
                 "Create Account"
               )}
+            </Button>
+            
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or sign up with</span>
+              </div>
+            </div>
+            
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleGmailLogin}
+              disabled={isLoading}
+            >
+              <Mail className="mr-2 h-4 w-4 text-red-500" />
+              Sign up with Gmail
             </Button>
             
             <p className="text-xs text-center text-muted-foreground mt-4">

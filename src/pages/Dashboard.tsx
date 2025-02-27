@@ -1,6 +1,7 @@
 
-import { useState } from 'react';
-import { Calendar, Clock, Edit2, FilePlus, FileText, Plus, Trash2, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, Clock, Edit2, FilePlus, FileText, LogOut, Plus, Trash2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -9,6 +10,10 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import AppointmentForm from '@/components/AppointmentForm';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 // Mock data for upcoming appointments
 const upcomingAppointments = [
@@ -74,15 +79,91 @@ const medicalRecords = [
   },
 ];
 
+interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  profileImage: string | null;
+  isAdmin: boolean;
+}
+
+const defaultProfile: UserProfile = {
+  name: "John Doe",
+  email: "john.doe@example.com",
+  phone: "",
+  address: "",
+  profileImage: null,
+  isAdmin: false
+};
+
 const Dashboard = () => {
   const [showNewAppointmentForm, setShowNewAppointmentForm] = useState(false);
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Load user profile from localStorage if available
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      try {
+        const userInfo = JSON.parse(storedUserInfo);
+        setProfile(userInfo);
+      } catch (e) {
+        console.error("Failed to parse user info from localStorage", e);
+      }
+    }
+  }, []);
   
   const handleCancelAppointment = (id: string) => {
     toast({
       title: "Appointment Cancelled",
       description: "Your appointment has been successfully cancelled.",
     });
+  };
+  
+  const handleProfileUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Save updated profile to localStorage
+    localStorage.setItem('userInfo', JSON.stringify(profile));
+    
+    toast({
+      title: "Profile Updated",
+      description: "Your profile has been successfully updated.",
+    });
+    
+    setShowProfileForm(false);
+  };
+  
+  const handleProfileFieldChange = (field: keyof UserProfile, value: string) => {
+    setProfile(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
+  const handleLogout = () => {
+    // Clear user data
+    localStorage.removeItem('userInfo');
+    
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    
+    // Redirect to home page
+    navigate('/');
+  };
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
   };
   
   return (
@@ -95,14 +176,34 @@ const Dashboard = () => {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center">
-                  <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
-                    <User size={40} />
+                  <Avatar className="h-24 w-24 mb-4">
+                    {profile.profileImage ? (
+                      <AvatarImage src={profile.profileImage} alt={profile.name} />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                        {getInitials(profile.name)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <h2 className="text-xl font-medium">{profile.name}</h2>
+                  <p className="text-muted-foreground">{profile.email}</p>
+                  <div className="flex gap-2 mt-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowProfileForm(true)}
+                    >
+                      Edit Profile
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </Button>
                   </div>
-                  <h2 className="text-xl font-medium">John Doe</h2>
-                  <p className="text-muted-foreground">john.doe@example.com</p>
-                  <Button variant="outline" size="sm" className="mt-4">
-                    Edit Profile
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -261,6 +362,77 @@ const Dashboard = () => {
             </DialogDescription>
           </DialogHeader>
           <AppointmentForm />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Profile Dialog */}
+      <Dialog open={showProfileForm} onOpenChange={setShowProfileForm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>
+              Update your personal information.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleProfileUpdate} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input 
+                id="name" 
+                value={profile.name} 
+                onChange={(e) => handleProfileFieldChange('name', e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                value={profile.email} 
+                onChange={(e) => handleProfileFieldChange('email', e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input 
+                id="phone" 
+                value={profile.phone} 
+                onChange={(e) => handleProfileFieldChange('phone', e.target.value)}
+                placeholder="(123) 456-7890"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Textarea 
+                id="address" 
+                value={profile.address} 
+                onChange={(e) => handleProfileFieldChange('address', e.target.value)}
+                placeholder="Your address"
+                rows={3}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="profileImage">Profile Image URL</Label>
+              <Input 
+                id="profileImage" 
+                value={profile.profileImage || ''} 
+                onChange={(e) => handleProfileFieldChange('profileImage', e.target.value)}
+                placeholder="https://example.com/your-image.jpg"
+              />
+              <p className="text-xs text-muted-foreground">Enter a URL to your profile image</p>
+            </div>
+            
+            <DialogFooter className="pt-4">
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

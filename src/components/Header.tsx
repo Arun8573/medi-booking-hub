@@ -1,12 +1,26 @@
 
 import { useState, useEffect } from 'react';
-import { CalendarDays, Menu, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CalendarDays, LogOut, Menu, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Track scroll position to change header style
   useEffect(() => {
@@ -17,6 +31,41 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Check for logged in user
+  useEffect(() => {
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      try {
+        const userInfo = JSON.parse(storedUserInfo);
+        setUser(userInfo);
+      } catch (e) {
+        console.error("Failed to parse user info from localStorage", e);
+      }
+    }
+  }, []);
+  
+  const handleLogout = () => {
+    // Clear user data
+    localStorage.removeItem('userInfo');
+    setUser(null);
+    
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    
+    // Navigate to home page
+    navigate('/');
+  };
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
 
   return (
     <header 
@@ -45,14 +94,47 @@ const Header = () => {
           <NavLink to="/contact" label="Contact" />
         </nav>
 
-        {/* CTA Buttons */}
+        {/* CTA Buttons / User Menu */}
         <div className="hidden md:flex items-center space-x-4">
-          <Button asChild variant="ghost">
-            <Link to="/login">Sign In</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/signup">Register</Link>
-          </Button>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar>
+                    {user.profileImage ? (
+                      <AvatarImage src={user.profileImage} alt={user.name} />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {getInitials(user.name)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate(user.isAdmin ? '/admin-dashboard' : '/dashboard')}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>{user.isAdmin ? 'Admin Dashboard' : 'Dashboard'}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button asChild variant="ghost">
+                <Link to="/login">Sign In</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/signup">Register</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -79,14 +161,44 @@ const Header = () => {
             <MobileNavLink to="/about" label="About" onClick={() => setIsMenuOpen(false)} />
             <MobileNavLink to="/contact" label="Contact" onClick={() => setIsMenuOpen(false)} />
             
-            <div className="pt-3 flex flex-col space-y-2">
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/login" onClick={() => setIsMenuOpen(false)}>Sign In</Link>
-              </Button>
-              <Button asChild className="w-full">
-                <Link to="/signup" onClick={() => setIsMenuOpen(false)}>Register</Link>
-              </Button>
-            </div>
+            {user ? (
+              <div className="pt-3 flex flex-col space-y-2">
+                <Button 
+                  asChild 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate(user.isAdmin ? '/admin-dashboard' : '/dashboard');
+                  }}
+                >
+                  <div>
+                    <User className="mr-2 h-4 w-4" />
+                    {user.isAdmin ? 'Admin Dashboard' : 'Dashboard'}
+                  </div>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start" 
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleLogout();
+                  }}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </Button>
+              </div>
+            ) : (
+              <div className="pt-3 flex flex-col space-y-2">
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>Sign In</Link>
+                </Button>
+                <Button asChild className="w-full">
+                  <Link to="/signup" onClick={() => setIsMenuOpen(false)}>Register</Link>
+                </Button>
+              </div>
+            )}
           </nav>
         </div>
       )}
