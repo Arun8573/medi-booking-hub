@@ -13,7 +13,7 @@ const Footer = () => {
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="flex items-center mb-4 space-x-2 text-primary">
               <CalendarDays className="w-7 h-7" />
-              <span className="text-xl font-medium">MediBooking</span>
+              <span className="text-xl font-medium">HelpCare Booking</span>
             </Link>
             <p className="text-muted-foreground text-sm mt-2">
               Schedule your medical appointments with ease, connecting patients with healthcare providers efficiently.
@@ -62,7 +62,7 @@ const Footer = () => {
         
         <div className="border-t border-border mt-12 pt-6 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} MediBooking. All rights reserved.
+            &copy; {currentYear} HelpCare Booking. All rights reserved.
           </p>
           <div className="mt-4 md:mt-0">
             <ul className="flex space-x-6 text-sm text-muted-foreground">

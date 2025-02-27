@@ -82,7 +82,7 @@ const Header = () => {
           className="flex items-center space-x-2 text-primary"
         >
           <CalendarDays className="w-8 h-8" />
-          <span className="text-xl font-medium">MediBooking</span>
+          <span className="text-xl font-medium">HelpCare Booking</span>
         </Link>
 
         {/* Desktop Navigation */}
