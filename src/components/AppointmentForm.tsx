@@ -148,7 +148,6 @@ const AppointmentForm = () => {
                   if (newDate) setDate(newDate);
                 }}
                 initialFocus
-                // Remove weekend and past day restrictions to allow selecting any date
               />
             </PopoverContent>
           </Popover>
