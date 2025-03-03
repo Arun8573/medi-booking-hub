@@ -85,6 +85,11 @@ const AppointmentForm = () => {
     }
   };
   
+  // Create a function to handle date changes
+  const handleDateChange = (newDate: Date | undefined) => {
+    setDate(newDate);
+  };
+  
   return (
     <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
       <div className="space-y-1.5">
@@ -144,10 +149,9 @@ const AppointmentForm = () => {
               <Calendar
                 mode="single"
                 selected={date}
-                onSelect={(newDate) => {
-                  if (newDate) setDate(newDate);
-                }}
+                onSelect={handleDateChange}
                 initialFocus
+                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
               />
             </PopoverContent>
           </Popover>
