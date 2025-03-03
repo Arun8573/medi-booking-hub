@@ -1,34 +1,13 @@
 
 import { useState } from 'react';
-import { CalendarIcon, Clock, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-
-const specialties = [
-  { id: 'general', name: 'General Medicine' },
-  { id: 'cardiology', name: 'Cardiology' },
-  { id: 'dermatology', name: 'Dermatology' },
-  { id: 'neurology', name: 'Neurology' },
-  { id: 'pediatrics', name: 'Pediatrics' },
-  { id: 'orthopedics', name: 'Orthopedics' },
-  { id: 'psychiatry', name: 'Psychiatry' },
-  { id: 'gynecology', name: 'Gynecology' },
-  { id: 'ophthalmology', name: 'Ophthalmology' },
-];
-
-const timeSlots = [
-  '09:00 AM', '10:00 AM', '11:00 AM', 
-  '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'
-];
+import { format } from 'date-fns';
+import { AppointmentSpecialty } from './appointment/AppointmentSpecialty';
+import { AppointmentType } from './appointment/AppointmentType';
+import { DateSelector } from './appointment/DateSelector';
+import { TimeSlotSelector } from './appointment/TimeSlotSelector';
+import { PatientInfoFields } from './appointment/PatientInfoFields';
 
 const AppointmentForm = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -85,128 +64,35 @@ const AppointmentForm = () => {
     }
   };
   
-  // Create a function to handle date changes
   const handleDateChange = (newDate: Date | undefined) => {
     setDate(newDate);
   };
   
   return (
     <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
-      <div className="space-y-1.5">
-        <Label htmlFor="specialty">Medical Specialty</Label>
-        <Select 
-          value={specialty} 
-          onValueChange={setSpecialty}
-        >
-          <SelectTrigger id="specialty">
-            <SelectValue placeholder="Select specialty" />
-          </SelectTrigger>
-          <SelectContent>
-            {specialties.map((spec) => (
-              <SelectItem key={spec.id} value={spec.id}>
-                {spec.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <AppointmentSpecialty 
+        specialty={specialty} 
+        setSpecialty={setSpecialty} 
+      />
 
-      <div className="space-y-1.5">
-        <Label>Appointment Type</Label>
-        <RadioGroup 
-          value={appointmentType} 
-          onValueChange={setAppointmentType}
-          className="flex flex-col sm:flex-row gap-4 pt-2"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="in-person" id="in-person" />
-            <Label htmlFor="in-person" className="cursor-pointer">In-Person Visit</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="video" id="video" />
-            <Label htmlFor="video" className="cursor-pointer">Video Consultation</Label>
-          </div>
-        </RadioGroup>
-      </div>
+      <AppointmentType 
+        appointmentType={appointmentType} 
+        setAppointmentType={setAppointmentType} 
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-1.5">
-          <Label>Appointment Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, "PPP") : "Select date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={handleDateChange}
-                initialFocus
-                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <DateSelector 
+          date={date} 
+          onDateChange={handleDateChange} 
+        />
 
-        <div className="space-y-1.5">
-          <Label>Appointment Time</Label>
-          <Select 
-            value={timeSlot || ""} 
-            onValueChange={setTimeSlot}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select time">
-                <div className="flex items-center">
-                  <Clock className="mr-2 h-4 w-4" />
-                  {timeSlot || "Select time"}
-                </div>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {timeSlots.map((time) => (
-                <SelectItem key={time} value={time}>
-                  {time}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="name">Full Name</Label>
-        <Input id="name" placeholder="Enter your full name" required />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@example.com" required />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="phone">Phone Number</Label>
-          <Input id="phone" placeholder="(123) 456-7890" required />
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="reason">Reason for Visit</Label>
-        <Textarea 
-          id="reason" 
-          placeholder="Briefly describe your symptoms or reason for the appointment" 
-          className="resize-none"
-          rows={3}
+        <TimeSlotSelector 
+          timeSlot={timeSlot} 
+          setTimeSlot={setTimeSlot} 
         />
       </div>
+
+      <PatientInfoFields />
 
       <Button type="submit" className="w-full">
         Schedule Appointment
