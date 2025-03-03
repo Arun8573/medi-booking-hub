@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { CalendarIcon, Clock, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,9 @@ const specialties = [
   { id: 'neurology', name: 'Neurology' },
   { id: 'pediatrics', name: 'Pediatrics' },
   { id: 'orthopedics', name: 'Orthopedics' },
+  { id: 'psychiatry', name: 'Psychiatry' },
+  { id: 'gynecology', name: 'Gynecology' },
+  { id: 'ophthalmology', name: 'Ophthalmology' },
 ];
 
 const timeSlots = [
@@ -27,7 +31,7 @@ const timeSlots = [
 ];
 
 const AppointmentForm = () => {
-  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [timeSlot, setTimeSlot] = useState<string | null>(null);
   const [appointmentType, setAppointmentType] = useState("in-person");
   const [specialty, setSpecialty] = useState("");
@@ -67,7 +71,7 @@ const AppointmentForm = () => {
       });
       
       setTimeout(() => {
-        setDate(undefined);
+        setDate(new Date());
         setTimeSlot(null);
         setAppointmentType("in-person");
         setSpecialty("");
@@ -136,11 +140,13 @@ const AppointmentForm = () => {
                 {date ? format(date, "PPP") : "Select date"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
+            <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
                 selected={date}
-                onSelect={setDate}
+                onSelect={(newDate) => {
+                  if (newDate) setDate(newDate);
+                }}
                 initialFocus
                 disabled={(date) => 
                   date < new Date(new Date().setHours(0, 0, 0, 0)) || 
@@ -161,7 +167,6 @@ const AppointmentForm = () => {
           <Select 
             value={timeSlot || ""} 
             onValueChange={setTimeSlot}
-            disabled={!date}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select time">
