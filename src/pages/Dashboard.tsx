@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Edit2, FilePlus, FileText, LogOut, Plus, Trash2, User } from 'lucide-react';
+import { Calendar, Clock, Edit2, FilePlus, FileText, LogOut, Plus, Trash2, User, Camera, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -101,6 +101,9 @@ const Dashboard = () => {
   const [showNewAppointmentForm, setShowNewAppointmentForm] = useState(false);
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -111,11 +114,32 @@ const Dashboard = () => {
       try {
         const userInfo = JSON.parse(storedUserInfo);
         setProfile(userInfo);
+        if (userInfo.profileImage) {
+          setPreviewUrl(userInfo.profileImage);
+        }
       } catch (e) {
         console.error("Failed to parse user info from localStorage", e);
       }
     }
   }, []);
+  
+  const handleProfileImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setSelectedFile(file);
+    
+    // Create a preview URL for the selected image
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
   
   const handleCancelAppointment = (id: string) => {
     toast({
@@ -127,8 +151,15 @@ const Dashboard = () => {
   const handleProfileUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Update profile with the new image URL if available
+    const updatedProfile = { ...profile };
+    if (previewUrl) {
+      updatedProfile.profileImage = previewUrl;
+    }
+    
     // Save updated profile to localStorage
-    localStorage.setItem('userInfo', JSON.stringify(profile));
+    localStorage.setItem('userInfo', JSON.stringify(updatedProfile));
+    setProfile(updatedProfile);
     
     toast({
       title: "Profile Updated",
@@ -176,15 +207,27 @@ const Dashboard = () => {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center">
-                  <Avatar className="h-24 w-24 mb-4">
-                    {profile.profileImage ? (
-                      <AvatarImage src={profile.profileImage} alt={profile.name} />
-                    ) : (
-                      <AvatarFallback className="bg-primary/10 text-primary text-xl">
-                        {getInitials(profile.name)}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar className="h-24 w-24 mb-4 cursor-pointer" onClick={handleProfileImageClick}>
+                      {profile.profileImage || previewUrl ? (
+                        <AvatarImage src={previewUrl || profile.profileImage || ''} alt={profile.name} />
+                      ) : (
+                        <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                          {getInitials(profile.name)}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="absolute bottom-4 right-0 bg-primary text-white rounded-full p-1 cursor-pointer" onClick={handleProfileImageClick}>
+                      <Camera className="h-4 w-4" />
+                    </div>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleFileChange}
+                    />
+                  </div>
                   <h2 className="text-xl font-medium">{profile.name}</h2>
                   <p className="text-muted-foreground">{profile.email}</p>
                   <div className="flex gap-2 mt-4">
@@ -376,6 +419,25 @@ const Dashboard = () => {
           </DialogHeader>
           
           <form onSubmit={handleProfileUpdate} className="space-y-4 py-4">
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <Avatar className="h-24 w-24 cursor-pointer" onClick={handleProfileImageClick}>
+                  {previewUrl ? (
+                    <AvatarImage src={previewUrl} alt={profile.name} />
+                  ) : profile.profileImage ? (
+                    <AvatarImage src={profile.profileImage} alt={profile.name} />
+                  ) : (
+                    <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                      {getInitials(profile.name)}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1.5 cursor-pointer" onClick={handleProfileImageClick}>
+                  <Camera className="h-4 w-4" />
+                </div>
+              </div>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input 
@@ -416,17 +478,6 @@ const Dashboard = () => {
                 placeholder="Your address"
                 rows={3}
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="profileImage">Profile Image URL</Label>
-              <Input 
-                id="profileImage" 
-                value={profile.profileImage || ''} 
-                onChange={(e) => handleProfileFieldChange('profileImage', e.target.value)}
-                placeholder="https://example.com/your-image.jpg"
-              />
-              <p className="text-xs text-muted-foreground">Enter a URL to your profile image</p>
             </div>
             
             <DialogFooter className="pt-4">

@@ -148,18 +148,10 @@ const AppointmentForm = () => {
                   if (newDate) setDate(newDate);
                 }}
                 initialFocus
-                disabled={(date) => 
-                  date < new Date(new Date().setHours(0, 0, 0, 0)) || 
-                  date.getDay() === 0 || 
-                  date.getDay() === 6
-                }
+                // Remove weekend and past day restrictions to allow selecting any date
               />
             </PopoverContent>
           </Popover>
-          <p className="text-xs text-muted-foreground flex items-center mt-1.5">
-            <Info className="h-3 w-3 mr-1" />
-            Weekends are not available
-          </p>
         </div>
 
         <div className="space-y-1.5">
